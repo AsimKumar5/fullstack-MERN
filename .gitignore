@@ -1,0 +1,49 @@
+# Dependencies and generated output
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Environment files and credentials
+.env
+.env.*
+backend/.env
+!.env.example
+!.env.*.example
+secrets/
+credentials/
+**/*credentials*.json
+**/*service-account*.json
+**/firebase-adminsdk*.json
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cert
+*.jks
+*.keystore
+*.token
+*.secret
+
+# Editor and operating-system files
+.vscode/*
+!.vscode/extensions.json
+**/.vscode/*
+!**/.vscode/extensions.json
+**/.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
