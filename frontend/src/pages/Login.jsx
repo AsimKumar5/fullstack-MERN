@@ -1,189 +1,137 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import { TrendingUp } from "lucide-react";
-import { loginUser } from "../api";
+import { clearAuthFeedback, login } from "../store/authSlice";
 
 function Login() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { status, error } = useSelector((state) => state.auth);
 
-    const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const [rememberMe, setRememberMe] = useState(false);
 
-    const [formData, setFormData] = useState({
-        email: "",
-        password: ""
+  const [validationError, setValidationError] = useState("");
+
+  const handleChange = (e) => {
+    setValidationError("");
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
     });
+  };
 
-    const [error, setError] = useState("");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-    const handleChange = (e) => {
+    dispatch(clearAuthFeedback());
+    setValidationError("");
 
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value
-        });
+    if (!formData.email || !formData.password) {
+      setValidationError("Please enter email and password.");
 
-    };
+      return;
+    }
 
-    const handleSubmit = async (e) => {
+    const result = await dispatch(login({ ...formData, rememberMe }));
+    if (login.fulfilled.match(result)) {
+      navigate("/dashboard");
+    }
+  };
 
-        e.preventDefault();
+  return (
+    <div className="auth-page auth-login-page">
+      <div className="auth-container">
+        {/* Left side */}
 
-        setError("");
+        <div className="auth-brand">
+          <div className="brand-icon">
+            <TrendingUp size={40} />
+          </div>
 
-        if (!formData.email || !formData.password) {
+          <h1>StockMarket</h1>
 
-            setError(
-                "Please enter email and password."
-            );
-
-            return;
-        }
-
-        try {
-                const data = await loginUser(formData);
-                console.log("✅ Login successful:", data);
-                // Store token if needed
-                localStorage.setItem("authToken", data.token);
-                navigate("/dashboard");
-        } catch (error) {
-            setError("Error connecting to server: " + error.message);
-            console.error("Login error:", error);
-        }
-
-    };
-
-    return (
-        <div className="auth-page">
-
-            <div className="auth-container">
-
-                {/* Left side */}
-
-                <div className="auth-brand">
-
-                    <div className="brand-icon">
-                        <TrendingUp size={40} />
-                    </div>
-
-                    <h1>
-                        StockMarket
-                    </h1>
-
-                    <p>
-                        Real-Time Stock Market
-                        Management System
-                    </p>
-
-                </div>
-
-
-                {/* Login form */}
-
-                <div className="auth-form-container">
-
-                    <div className="auth-form">
-
-                        <h2>
-                            Welcome Back
-                        </h2>
-
-                        <p>
-                            Login to manage your
-                            investments.
-                        </p>
-
-                        {error && (
-                            <div className="error-message">
-                                {error}
-                            </div>
-                        )}
-
-                        <form
-                            onSubmit={handleSubmit}
-                        >
-
-                            <div className="form-group">
-
-                                <label>
-                                    Email Address
-                                </label>
-
-                                <input
-                                    type="email"
-                                    name="email"
-                                    placeholder="Enter your email"
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                />
-
-                            </div>
-
-
-                            <div className="form-group">
-
-                                <label>
-                                    Password
-                                </label>
-
-                                <input
-                                    type="password"
-                                    name="password"
-                                    placeholder="Enter your password"
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                />
-
-                            </div>
-
-
-                            <div className="form-options">
-
-                                <label>
-
-                                    <input
-                                        type="checkbox"
-                                    />
-
-                                    Remember me
-
-                                </label>
-
-                                <Link to="/forgot-password">
-                                    Forgot password?
-                                </Link>
-
-                            </div>
-
-
-                            <button
-                                type="submit"
-                                className="primary-button"
-                            >
-                                Login
-                            </button>
-
-                        </form>
-
-
-                        <div className="auth-footer">
-
-                            <span>
-                                Don't have an account?
-                            </span>
-
-                            <Link to="/register">
-                                Create Account
-                            </Link>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
+          <p>Real-Time Stock Market Management System</p>
         </div>
-    );
+
+        {/* Login form */}
+
+        <div className="auth-form-container">
+          <div className="auth-form">
+            <h2>Welcome Back</h2>
+
+            <p>Login to manage your investments.</p>
+
+            {(validationError || error || location.state?.message) && (
+              <div className="error-message">
+                {validationError || error || location.state.message}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label>Email Address</label>
+
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Enter your email"
+                  value={formData.email}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Password</label>
+
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="Enter your password"
+                  value={formData.password}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className="form-options">
+                <label className="remember-me-option" htmlFor="remember-me">
+                  <input
+                    id="remember-me"
+                    name="rememberMe"
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(event) => setRememberMe(event.target.checked)}
+                  />
+                  <span>Remember me</span>
+                </label>
+
+                <Link to="/forgot-password">Forgot password?</Link>
+              </div>
+
+              <button
+                type="submit"
+                className="primary-button"
+                disabled={status === "loading"}
+              >
+                {status === "loading" ? "Logging in..." : "Login"}
+              </button>
+            </form>
+
+            <div className="auth-footer">
+              <span>Don't have an account?</span>
+
+              <Link to="/register">Create Account</Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default Login;

@@ -3,12 +3,37 @@ import PortfolioTable from "../components/PortfolioTable";
 import { getPortfolio } from "../api";
 
 function Portfolio() {
-
-    const [portfolio, setPortfolio] = useState({ holdings: [], investment: 0, currentValue: 0, profit: 0 });
+    const [portfolio, setPortfolio] = useState({
+        holdings: [],
+        totalInvestment: 0,
+        totalValue: 0,
+        totalProfit: 0,
+    });
+    const [status, setStatus] = useState("loading");
+    const [error, setError] = useState("");
+    const [retryCount, setRetryCount] = useState(0);
 
     useEffect(() => {
-        getPortfolio().then(setPortfolio).catch(() => {});
-    }, []);
+        let isCurrentRequest = true;
+
+        getPortfolio()
+            .then((data) => {
+                if (isCurrentRequest) {
+                    setPortfolio(data);
+                    setStatus("succeeded");
+                }
+            })
+            .catch((requestError) => {
+                if (isCurrentRequest) {
+                    setError(requestError.message || "Unable to load portfolio.");
+                    setStatus("failed");
+                }
+            });
+
+        return () => {
+            isCurrentRequest = false;
+        };
+    }, [retryCount]);
 
     return (
         <div>
@@ -20,30 +45,57 @@ function Portfolio() {
                 </p>
             </div>
 
-            <div className="portfolio-summary">
-
-                <div className="stat-card">
-                    <span>Total Investment</span>
-                    <h2>₹{(portfolio.totalInvestment || 0).toLocaleString("en-IN")}</h2>
+            {status === "loading" && (
+                <div className="stocks-state" role="status">
+                    <span className="transaction-spinner" />
+                    <strong>Loading your portfolio</strong>
                 </div>
+            )}
 
-                <div className="stat-card">
-                    <span>Current Value</span>
-                    <h2>₹{(portfolio.totalValue || 0).toLocaleString("en-IN")}</h2>
+            {status === "failed" && (
+                <div className="stocks-state stocks-state-error" role="alert">
+                    <strong>We couldn’t load your portfolio</strong>
+                    <p>{error}</p>
+                    <button
+                        className="secondary-button"
+                        type="button"
+                        onClick={() => {
+                            setError("");
+                            setStatus("loading");
+                            setRetryCount((current) => current + 1);
+                        }}
+                    >
+                        Try again
+                    </button>
                 </div>
+            )}
 
-                <div className="stat-card">
-                    <span>Total Profit</span>
-                    <h2 className="positive">
-                        +₹{(portfolio.totalProfit || 0).toLocaleString("en-IN")}
-                    </h2>
-                </div>
+            {status === "succeeded" && (
+                <>
+                    <div className="portfolio-summary">
+                        <div className="stat-card">
+                            <span>Total Investment</span>
+                            <h2>₹{portfolio.totalInvestment.toLocaleString("en-IN")}</h2>
+                        </div>
 
-            </div>
+                        <div className="stat-card">
+                            <span>Current Value</span>
+                            <h2>₹{portfolio.totalValue.toLocaleString("en-IN")}</h2>
+                        </div>
 
-            <PortfolioTable
-                holdings={portfolio.holdings}
-            />
+                        <div className="stat-card">
+                            <span>Total Profit / Loss</span>
+                            <h2 className={portfolio.totalProfit >= 0 ? "positive" : "negative"}>
+                                {portfolio.totalProfit >= 0 ? "+" : "-"}₹
+                                {Math.abs(portfolio.totalProfit).toLocaleString("en-IN")}
+                            </h2>
+                        </div>
+
+                    </div>
+
+                    <PortfolioTable holdings={portfolio.holdings} />
+                </>
+            )}
 
         </div>
     );

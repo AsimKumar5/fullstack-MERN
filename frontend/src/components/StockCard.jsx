@@ -1,4 +1,5 @@
 import { TrendingUp, TrendingDown } from "lucide-react";
+import { Link } from "react-router-dom";
 
 function StockCard({
   name,
@@ -10,7 +11,11 @@ function StockCard({
   const isPositive = change >= 0;
 
   return (
-    <div className="stock-card">
+    <Link
+      className="stock-card stock-card-link"
+      to={`/stocks/${encodeURIComponent(symbol)}`}
+      aria-label={`View ${name} (${symbol}) details`}
+    >
 
       <div className="stock-info">
 
@@ -51,7 +56,7 @@ function StockCard({
 
       </div>
 
-    </div>
+    </Link>
   );
 }
 

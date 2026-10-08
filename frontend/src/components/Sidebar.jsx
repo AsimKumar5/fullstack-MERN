@@ -5,12 +5,27 @@ import {
   Receipt,
   BarChart3,
   Settings,
-  LogOut
+  LogOut,
+  Bell,
+  ShieldCheck
 } from "lucide-react";
 
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "../store/authSlice";
 
 function Sidebar() {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { status, error } = useSelector((state) => state.auth);
+  const { profile } = useSelector((state) => state.user);
+
+  const handleLogout = async () => {
+    const result = await dispatch(logout());
+    if (logout.fulfilled.match(result)) {
+      navigate("/login", { replace: true });
+    }
+  };
 
   const menuItems = [
     {
@@ -37,8 +52,21 @@ function Sidebar() {
       name: "Analytics",
       path: "/analytics",
       icon: <BarChart3 size={20} />
+    },
+    {
+      name: "Notifications",
+      path: "/notifications",
+      icon: <Bell size={20} />
     }
   ];
+
+  if (profile?.isAdmin) {
+    menuItems.push({
+      name: "Admin panel",
+      path: "/admin",
+      icon: <ShieldCheck size={20} />,
+    });
+  }
 
   return (
     <aside className="sidebar">
@@ -72,9 +100,11 @@ function Sidebar() {
           <span>Settings</span>
         </NavLink>
 
-        <button className="logout">
+        {error && <p className="error-message">{error}</p>}
+
+        <button className="logout" onClick={handleLogout} disabled={status === "loading"}>
           <LogOut size={20} />
-          <span>Logout</span>
+          <span>{status === "loading" ? "Logging out..." : "Logout"}</span>
         </button>
 
       </div>

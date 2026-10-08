@@ -1,4 +1,6 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
+import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
@@ -12,11 +14,39 @@ import Transactions from "./pages/Transactions";
 import Analytics from "./pages/Analytics";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
+import Notifications from "./pages/Notifications";
+import AdminPanel from "./pages/AdminPanel";
+import { sessionExpired } from "./store/authSlice";
 import "./App.css";
+
+function AuthSessionHandler() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      dispatch(sessionExpired());
+      navigate("/login", {
+        replace: true,
+        state: { message: "Your session expired. Please log in again." },
+      });
+    };
+
+    window.addEventListener("authSessionExpired", handleSessionExpired);
+    return () => window.removeEventListener("authSessionExpired", handleSessionExpired);
+  }, [dispatch, navigate]);
+
+  return null;
+}
 
 function App() {
   return (
     <BrowserRouter>
+      <AuthSessionHandler />
       <Routes>
 
         <Route path="/" element={<Home />} />
@@ -24,6 +54,8 @@ function App() {
         {/* Authentication pages */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Main application */}
         <Route
@@ -69,6 +101,26 @@ function App() {
                     <Route
                       path="/analytics"
                       element={<Analytics />}
+                    />
+
+                    <Route
+                      path="/profile"
+                      element={<Profile />}
+                    />
+
+                    <Route
+                      path="/settings"
+                      element={<Settings />}
+                    />
+
+                    <Route
+                      path="/notifications"
+                      element={<Notifications />}
+                    />
+
+                    <Route
+                      path="/admin"
+                      element={<AdminPanel />}
                     />
 
                   </Routes>

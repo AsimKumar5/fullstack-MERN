@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import { TrendingUp } from "lucide-react";
-import { registerUser } from "../api";
+import { clearAuthFeedback, register } from "../store/authSlice";
 
 function Register() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { status, error } = useSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -13,9 +16,10 @@ function Register() {
     confirmPassword: "",
   });
 
-  const [error, setError] = useState("");
+  const [validationError, setValidationError] = useState("");
 
   const handleChange = (e) => {
+    setValidationError("");
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
@@ -25,7 +29,8 @@ function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    setError("");
+    dispatch(clearAuthFeedback());
+    setValidationError("");
 
     if (
       !formData.name ||
@@ -33,40 +38,35 @@ function Register() {
       !formData.password ||
       !formData.confirmPassword
     ) {
-      setError("Please fill in all fields.");
+      setValidationError("Please fill in all fields.");
 
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match.");
+      setValidationError("Passwords do not match.");
 
       return;
     }
 
     if (formData.password.length < 6) {
-      setError("Password must contain at least 6 characters.");
+      setValidationError("Password must contain at least 6 characters.");
 
       return;
     }
 
-    try {
-      const { confirmPassword, ...payload } = formData;
-
-      const data = await registerUser({
-        ...payload,
-        confirmPassword,
-      });
-      console.log("✅ Registration successful:", data);
+    const { confirmPassword, ...payload } = formData;
+    const result = await dispatch(register({
+      ...payload,
+      confirmPassword,
+    }));
+    if (register.fulfilled.match(result)) {
       navigate("/login");
-    } catch (error) {
-      setError("Error connecting to server: " + error.message);
-      console.error("Registration error:", error);
     }
   };
 
   return (
-    <div className="auth-page">
+    <div className="auth-page auth-register-page">
       <div className="auth-container">
         {/* Brand */}
 
@@ -88,7 +88,9 @@ function Register() {
 
             <p>Create your investor account.</p>
 
-            {error && <div className="error-message">{error}</div>}
+            {(validationError || error) && (
+              <div className="error-message">{validationError || error}</div>
+            )}
 
             <form onSubmit={handleSubmit}>
               <div className="form-group">
@@ -145,8 +147,8 @@ function Register() {
                 <span>I agree to the terms and conditions.</span>
               </label>
 
-              <button type="submit" className="primary-button">
-                Create Account
+              <button type="submit" className="primary-button" disabled={status === "loading"}>
+                {status === "loading" ? "Creating account..." : "Create Account"}
               </button>
             </form>
 

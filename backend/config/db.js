@@ -3,7 +3,8 @@ import mongoose from "mongoose";
 //mongodb connection
 const connectDB = async () => {
   try {
-    await mongoose.connect("mongodb://localhost:27017/fullstack");
+    const mongoUrl = process.env.MONGO_URL || "mongodb://localhost:27017/fullstack";
+    await mongoose.connect(mongoUrl);
     console.log("MongoDB connected successfully");
   } catch (err) {
     console.error("Error connecting to mongoDB:", err.message);
