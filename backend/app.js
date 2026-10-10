@@ -9,7 +9,6 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const app = express();
-const PORT = 4000;
 
 app.use(cors());
 app.use(cookieParser());
@@ -19,15 +18,8 @@ app.use(express.urlencoded({ extended: true }));
 app.get("/stocks", renderStocksPage);
 app.use("/api", router);
 
-const startServer = async () => {
   await connectDB();
   await seedStocksIfEmpty();
-  app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+  app.listen(process.env.PORT || 4000, () => {
+    console.log(`Server running on http://localhost:${process.env.PORT || 4000}`);
   });
-};
-
-startServer().catch((error) => {
-  console.error("Server startup failed:", error);
-  process.exitCode = 1;
-});
