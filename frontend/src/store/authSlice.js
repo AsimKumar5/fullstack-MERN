@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import {
+  getCurrentUser,
   loginUser,
   logoutUser,
   registerUser,
@@ -7,31 +8,24 @@ import {
   resetPassword,
 } from "../api";
 
-const loadToken = () => {
-  try {
-    return localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
-  } catch {
-    return null;
-  }
-};
+try {
+  localStorage.removeItem("authToken");
+  sessionStorage.removeItem("authToken");
+} catch (error) {
+  console.error("Unable to clear legacy authentication tokens:", error);
+}
+
+export const restoreSession = createAsyncThunk(
+  "auth/restoreSession",
+  getCurrentUser,
+  {
+    condition: (_, { getState }) => getState().auth.status !== "checking",
+  },
+);
 
 export const login = createAsyncThunk("auth/login", async (credentials) => {
   const { rememberMe, ...loginCredentials } = credentials;
-  const data = await loginUser({ ...loginCredentials, rememberMe });
-  try {
-    if (data.token) {
-      if (rememberMe) {
-        localStorage.setItem("authToken", data.token);
-        sessionStorage.removeItem("authToken");
-      } else {
-        sessionStorage.setItem("authToken", data.token);
-        localStorage.removeItem("authToken");
-      }
-    }
-  } catch (error) {
-    console.error("Unable to persist the authentication token:", error);
-  }
-  return data;
+  return loginUser({ ...loginCredentials, rememberMe });
 });
 export const register = createAsyncThunk("auth/register", registerUser);
 export const requestReset = createAsyncThunk("auth/requestReset", requestPasswordReset);
@@ -39,19 +33,10 @@ export const reset = createAsyncThunk(
   "auth/resetPassword",
   ({ token, password }) => resetPassword(token, password),
 );
-export const logout = createAsyncThunk("auth/logout", async () => {
-  const data = await logoutUser();
-  try {
-    localStorage.removeItem("authToken");
-    sessionStorage.removeItem("authToken");
-  } catch (error) {
-    console.error("Unable to remove the stored authentication token:", error);
-  }
-  return data;
-});
+export const logout = createAsyncThunk("auth/logout", logoutUser);
 
 const initialState = {
-  token: loadToken(),
+  isAuthenticated: false,
   status: "idle",
   error: null,
   resetUrl: null,
@@ -63,7 +48,7 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     sessionExpired(state) {
-      state.token = null;
+      state.isAuthenticated = false;
       state.status = "idle";
       state.error = "Your session expired. Please log in again.";
     },
@@ -80,13 +65,25 @@ const authSlice = createSlice({
         state.status = "loading";
         state.error = null;
       })
-      .addCase(login.fulfilled, (state, action) => {
+      .addCase(login.fulfilled, (state) => {
         state.status = "succeeded";
-        state.token = action.payload.token || null;
+        state.isAuthenticated = true;
       })
       .addCase(login.rejected, (state, action) => {
         state.status = "failed";
+        state.isAuthenticated = false;
         state.error = action.error.message || "Unable to log in";
+      })
+      .addCase(restoreSession.pending, (state) => {
+        state.status = "checking";
+      })
+      .addCase(restoreSession.fulfilled, (state) => {
+        state.status = "idle";
+        state.isAuthenticated = true;
+      })
+      .addCase(restoreSession.rejected, (state) => {
+        state.status = "idle";
+        state.isAuthenticated = false;
       })
       .addCase(register.pending, (state) => {
         state.status = "loading";
@@ -133,7 +130,7 @@ const authSlice = createSlice({
       })
       .addCase(logout.fulfilled, (state) => {
         state.status = "idle";
-        state.token = null;
+        state.isAuthenticated = false;
         state.error = null;
       })
       .addCase(logout.rejected, (state, action) => {

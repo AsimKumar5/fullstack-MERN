@@ -14,8 +14,12 @@ A full-stack stock and portfolio management dashboard. The React frontend provid
 - Node.js 18 or newer
 - MongoDB running locally on its default port (`27017`)
 
-The backend reads `MONGO_URL` and `PORT` from `backend/.env`. The default local
-configuration uses `mongodb://localhost:27017/fullstack` and port `4000`.
+The backend reads `MONGO_URL`, `PORT`, and `CLIENT_URL` from `backend/.env`. The default
+local configuration uses `mongodb://localhost:27017/fullstack`, port `4000`, and
+`http://localhost:5173` as the frontend origin. The frontend reads `VITE_API_URL` to
+choose the backend origin; it defaults to `http://localhost:4000`.
+
+Login JWTs are stored in an HttpOnly cookie and sent automatically with API requests.
 
 To enable the admin panel, add `ADMIN_EMAIL=admin@example.com` to the backend `.env`,
 replacing it with the email address of an already registered account, then restart the
@@ -49,7 +53,9 @@ cd react-project-repo/frontend
 npm run dev
 ```
 
-Open the URL printed by Vite, usually `http://localhost:5173`. The frontend proxies `/api` requests to the backend at `http://localhost:4000`.
+Open the URL printed by Vite, usually `http://localhost:5173`. The frontend sends API
+requests directly to the backend origin configured by `VITE_API_URL`; credentialed
+requests are allowed for the origin configured by `CLIENT_URL`.
 
 ## Available Scripts
 

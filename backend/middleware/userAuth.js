@@ -4,9 +4,7 @@ import User from "../models/userModel.js";
 const userAuth = async (req, res, next) => {
   let decoded;
   try {
-    const authorization = req.get("authorization");
-    const bearerToken = authorization?.match(/^Bearer\s+(.+)$/i)?.[1];
-    const token = bearerToken || req.cookies.token;
+    const token = req.cookies.token;
     if (!token) {
       return res.status(401).json({
         message: "Unauthorized",

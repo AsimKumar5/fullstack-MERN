@@ -20,7 +20,7 @@ import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import Notifications from "./pages/Notifications";
 import AdminPanel from "./pages/AdminPanel";
-import { sessionExpired } from "./store/authSlice";
+import { restoreSession, sessionExpired } from "./store/authSlice";
 import "./App.css";
 
 function AuthSessionHandler() {
@@ -28,6 +28,8 @@ function AuthSessionHandler() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    dispatch(restoreSession());
+
     const handleSessionExpired = () => {
       dispatch(sessionExpired());
       navigate("/login", {

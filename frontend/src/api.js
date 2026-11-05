@@ -1,21 +1,12 @@
-const getStoredAuthToken = () => {
-  try {
-    return localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
-  } catch (error) {
-    console.error("Unable to read the stored authentication token:", error);
-    return null;
-  }
-};
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 const apiRequest = async (path, options = {}) => {
-  const token = getStoredAuthToken();
-  const response = await fetch(`/api${path}`, {
+  const response = await fetch(`${API_BASE_URL}/api${path}`, {
     ...options,
-    credentials: "same-origin",
+    credentials: "include",
     headers: {
       ...options.headers,
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
   });
   const responseText = await response.text();
@@ -29,13 +20,19 @@ const apiRequest = async (path, options = {}) => {
     }
   }
 
-  if (response.status === 401 && token && path !== "/loginUser") {
-    try {
-      localStorage.removeItem("authToken");
-      sessionStorage.removeItem("authToken");
-    } catch (error) {
-      console.error("Unable to clear the expired authentication token:", error);
-    }
+  const publicPaths = [
+    "/loginUser",
+    "/registerUser",
+    "/logoutUser",
+    "/forgotPassword",
+    "/resetPassword",
+  ];
+  if (
+    response.status === 401 &&
+    path !== "/me" &&
+    !publicPaths.includes(path) &&
+    !path.startsWith("/stocks")
+  ) {
     window.dispatchEvent(new Event("authSessionExpired"));
   }
 

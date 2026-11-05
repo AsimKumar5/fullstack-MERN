@@ -18,7 +18,7 @@ import {
 } from "../utils/notifications";
 
 function Notifications() {
-  const token = useSelector((state) => state.auth.token);
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const [notifications, setNotifications] = useState([]);
   const [readIds, setReadIds] = useState(loadReadNotifications);
   const [filter, setFilter] = useState("all");
@@ -29,7 +29,7 @@ function Notifications() {
   useEffect(() => {
     let isCurrentRequest = true;
 
-    Promise.all([getStocks(), token ? getTransactions() : Promise.resolve([])])
+    Promise.all([getStocks(), isAuthenticated ? getTransactions() : Promise.resolve([])])
       .then(([stocks, transactions]) => {
         if (!Array.isArray(stocks) || !Array.isArray(transactions)) {
           throw new Error("The server returned invalid notification data.");
@@ -49,7 +49,7 @@ function Notifications() {
     return () => {
       isCurrentRequest = false;
     };
-  }, [retryCount, token]);
+  }, [retryCount, isAuthenticated]);
 
   const unreadIds = useMemo(
     () => notifications.filter((item) => !readIds.includes(item.id)).map((item) => item.id),

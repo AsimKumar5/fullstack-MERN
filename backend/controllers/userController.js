@@ -3,6 +3,13 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { createHash, randomBytes } from "node:crypto";
 
+const getAuthCookieOptions = () => ({
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  path: "/",
+});
+
 //<--------------------register User-------------------->
 const registerUser = async (req, res) => {
   try {
@@ -85,7 +92,7 @@ const loginUser = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: tokenLifetime },
     );
-    const cookieOptions = { httpOnly: true };
+    const cookieOptions = getAuthCookieOptions();
 
     if (rememberMe === true) {
       cookieOptions.maxAge = 30 * 24 * 60 * 60 * 1000;
@@ -93,7 +100,6 @@ const loginUser = async (req, res) => {
 
     return res.status(200).cookie("token", token, cookieOptions).json({
       message: "Login Successfully",
-      token,
       user: {
         id: user._id.toString(),
         name: user.name,
@@ -110,7 +116,7 @@ const loginUser = async (req, res) => {
 };
 
 const logoutUser = (req, res) => {
-  return res.clearCookie("token").status(200).json({
+  return res.clearCookie("token", getAuthCookieOptions()).status(200).json({
     message: "Logout successful",
   });
 };

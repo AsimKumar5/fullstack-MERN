@@ -6,13 +6,13 @@ import { fetchCurrentUser } from "../store/userSlice";
 function Profile() {
   const dispatch = useDispatch();
   const { profile, status, error } = useSelector((state) => state.user);
-  const token = useSelector((state) => state.auth.token);
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
 
   useEffect(() => {
-    if (token && !profile && status === "idle") {
+    if (isAuthenticated && !profile && status === "idle") {
       dispatch(fetchCurrentUser());
     }
-  }, [dispatch, token, profile, status]);
+  }, [dispatch, isAuthenticated, profile, status]);
 
   return (
     <section className="profile-page">
@@ -21,18 +21,18 @@ function Profile() {
         <p>View your account details.</p>
       </div>
 
-      {!token && (
+      {!isAuthenticated && (
         <div className="analytics-card">
           <p>Please log in to view your profile.</p>
           <Link to="/login">Go to login</Link>
         </div>
       )}
 
-      {token && status === "loading" && (
+      {isAuthenticated && status === "loading" && (
         <div className="analytics-card" role="status">Loading profile...</div>
       )}
 
-      {token && status === "failed" && (
+      {isAuthenticated && status === "failed" && (
         <div className="analytics-card">
           <p className="error-message">{error || "Unable to load your profile."}</p>
           <button

@@ -26,16 +26,16 @@ const readPreferences = () => {
 function Settings() {
   const dispatch = useDispatch();
   const { profile, status, error } = useSelector((state) => state.user);
-  const token = useSelector((state) => state.auth.token);
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const [preferences, setPreferences] = useState(readPreferences);
   const [saveMessage, setSaveMessage] = useState("");
   const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
-    if (token && !profile && status === "idle") {
+    if (isAuthenticated && !profile && status === "idle") {
       dispatch(fetchCurrentUser());
     }
-  }, [dispatch, token, profile, status]);
+  }, [dispatch, isAuthenticated, profile, status]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = preferences.theme;
@@ -172,7 +172,7 @@ function Settings() {
                 {error || "Unable to load account details."}
               </p>
             )}
-            {!token && (
+            {!isAuthenticated && (
               <p className="settings-hint">
                 Sign in to view your account details. <Link to="/login">Go to login</Link>
               </p>

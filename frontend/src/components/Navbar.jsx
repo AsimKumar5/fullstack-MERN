@@ -11,20 +11,20 @@ import {
 
 function Navbar() {
   const dispatch = useDispatch();
-  const token = useSelector((state) => state.auth.token);
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const { profile } = useSelector((state) => state.user);
   const [notificationBadge, setNotificationBadge] = useState({ token: null, count: 0 });
   const unreadCount =
-    token && notificationBadge.token === token ? notificationBadge.count : 0;
+    isAuthenticated && notificationBadge.token === isAuthenticated ? notificationBadge.count : 0;
 
   useEffect(() => {
-    if (token && !profile) {
+    if (isAuthenticated && !profile) {
       dispatch(fetchCurrentUser());
     }
-  }, [dispatch, token, profile]);
+  }, [dispatch, isAuthenticated, profile]);
 
   useEffect(() => {
-    if (!token) {
+    if (!isAuthenticated) {
       return undefined;
     }
 
@@ -33,7 +33,7 @@ function Navbar() {
     const syncUnreadCount = () => {
       const readIds = loadReadNotifications();
       setNotificationBadge({
-        token,
+        token: isAuthenticated,
         count: notificationIds.filter((id) => !readIds.includes(id)).length,
       });
     };
@@ -74,7 +74,7 @@ function Navbar() {
       window.removeEventListener("readNotificationsChange", handleReadStatusChange);
       window.removeEventListener("storage", handleStorageChange);
     };
-  }, [token]);
+  }, [isAuthenticated]);
 
   return (
     <header className="navbar">

@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { getCurrentUser } from "../api";
-import { login, logout, sessionExpired } from "./authSlice";
+import { login, logout, restoreSession, sessionExpired } from "./authSlice";
 
 export const fetchCurrentUser = createAsyncThunk(
   "user/fetchCurrentUser",
@@ -29,6 +29,11 @@ const userSlice = createSlice({
       .addCase(login.fulfilled, (state, action) => {
         state.profile = action.payload.user || null;
         state.status = state.profile ? "succeeded" : "idle";
+        state.error = null;
+      })
+      .addCase(restoreSession.fulfilled, (state, action) => {
+        state.profile = action.payload.user;
+        state.status = "succeeded";
         state.error = null;
       })
       .addCase(logout.fulfilled, (state) => {
